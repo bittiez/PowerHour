@@ -1,0 +1,13 @@
+name: PowerHour
+version: 1.0.0
+author: bittiez
+main: US.bittiez.PowerHour.main
+commands:
+    PowerHour:
+        description: Various PowerHour commands.
+        usage: /PowerHour
+        permission: PowerHour.PowerHour
+permissions:
+    PowerHour.PowerHour:
+        description: Usage of various PowerHour commands
+        default: op
