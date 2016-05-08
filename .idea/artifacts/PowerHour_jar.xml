@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PowerHour:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PowerHour_jar</output-path>
+    <root id="archive" name="PowerHour.jar">
+      <element id="module-output" name="PowerHour" />
+    </root>
+  </artifact>
+</component>
