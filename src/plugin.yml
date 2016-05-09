@@ -20,3 +20,6 @@ permissions:
     PowerHour.delArena:
         description: Allows deleting arenas
         default: op
+    PowerHour.listArenas:
+        description: Allows listing all arenas
+        default: op
