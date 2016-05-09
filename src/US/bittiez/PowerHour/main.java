@@ -1,6 +1,7 @@
 package US.bittiez.PowerHour;
 
 import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -40,13 +41,35 @@ public class main extends JavaPlugin implements Listener{
 
                     if(player.hasPermission(PERMISSION.reload))
                         player.sendMessage(powerHourMsg("/PowerHour reload | Reloads config files."));
+                    if(player.hasPermission(PERMISSION.addArena))
+                        player.sendMessage(powerHourMsg("/PowerHour addArena <arenaName> | Add a new arena where you are standing"));
                 } else { //There is arguments
-                    switch (args[0]){
+                    switch (args[0].toLowerCase()){
                         case "reload":
                             if(player.hasPermission(PERMISSION.reload)) {
                                 loadConfig();
                                 loadLangFile();
                                 player.sendMessage(powerHourMsg("Config reloaded!"));
+                            }
+                            break;
+                        case "addarena":
+                            if(player.hasPermission(PERMISSION.addArena)){
+                                if(args.length < 2) {
+                                    player.sendMessage(powerHourMsg("You did not specify a name for the Arena! Proper usage:"));
+                                    player.sendMessage(powerHourMsg("/PowerHour addArena arenaName"));
+                                } else {
+                                    Arena newArena = new Arena();
+                                    newArena.setName(args[1]);
+                                    newArena.setWorld(player.getWorld().getName());
+                                    Block loc  = player.getLocation().getBlock();
+                                    newArena.setX(loc.getX());
+                                    newArena.setY(loc.getY());
+                                    newArena.setZ(loc.getZ());
+                                    if (saveNewArena(newArena))
+                                        player.sendMessage(powerHourMsg("Added the " + newArena.getName() + " arena!"));
+                                    else
+                                        player.sendMessage(powerHourMsg("Could not save the arena, something went wrong (Make sure there are no other arenas with the same name)."));
+                                }
                             }
                             break;
                     }
@@ -58,6 +81,17 @@ public class main extends JavaPlugin implements Listener{
         return false;
     }
 
+    private boolean saveNewArena(Arena arena){
+        if(!config.contains("arenas." + arena.getName())) {
+            config.set("arenas." + arena.getName() + ".locX", arena.getX());
+            config.set("arenas." + arena.getName() + ".locY", arena.getY());
+            config.set("arenas." + arena.getName() + ".locZ", arena.getZ());
+            config.set("arenas." + arena.getName() + ".world", arena.getWorld());
+            saveConfig();
+        } else
+            return false;
+        return true;
+    }
 
     private String powerHourMsg(String msg){
         return ChatColor.DARK_AQUA + "[Power Hour] " + ChatColor.AQUA + msg;
