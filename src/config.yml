@@ -1,3 +1,5 @@
 powerHours:
   - 0900
   - 2000
+length:
+  - 60
