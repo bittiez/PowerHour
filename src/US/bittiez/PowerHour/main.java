@@ -12,6 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -45,6 +47,8 @@ public class main extends JavaPlugin implements Listener{
                         player.sendMessage(powerHourMsg("/PowerHour addArena <arenaName> | Add a new arena where you are standing"));
                     if(player.hasPermission(PERMISSION.delArena))
                         player.sendMessage(powerHourMsg("/PowerHour delArena <arenaName> | Deletes the specified arena from the config"));
+                    if(player.hasPermission(PERMISSION.listArenas))
+                        player.sendMessage(powerHourMsg("/PowerHour list | Lists all arenas set up"));
 
 
                 } else { //There is arguments
@@ -89,6 +93,17 @@ public class main extends JavaPlugin implements Listener{
                                     } else
                                         player.sendMessage(args[1] + " does not seem to exist!");
                                 }
+                            }
+                            break;
+                        case "list":
+                            if(player.hasPermission(PERMISSION.listArenas)){
+                                Set arenaList = config.getConfigurationSection("arenas").getKeys(false);
+                                StringBuilder sb = new StringBuilder();
+                                for(Object s : arenaList){
+                                    sb.append(s.toString() + " ");
+                                }
+
+                                player.sendMessage(powerHourMsg(sb.toString()));
                             }
                             break;
                     }
