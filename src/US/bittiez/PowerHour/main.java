@@ -1,7 +1,12 @@
 package US.bittiez.PowerHour;
 
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -11,7 +16,7 @@ import java.util.logging.Logger;
 /**
  * Created by tadtaylor on 5/7/16.
  */
-public class main extends JavaPlugin {
+public class main extends JavaPlugin implements Listener{
     private static Logger log;
     private FileConfiguration lang;
     private FileConfiguration config = getConfig();
@@ -25,14 +30,46 @@ public class main extends JavaPlugin {
         loadLangFile();
     }
 
+    public boolean onCommand(CommandSender who, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("powerhour")) {
+            if (who instanceof Player) {
+                Player player = (Player)who;
+
+                if(args.length < 1){ //Did not specify any arguments
+                    player.sendMessage(powerHourMsg("----- Available commands: -----"));
+
+                    if(player.hasPermission(PERMISSION.reload))
+                        player.sendMessage(powerHourMsg("/PowerHour reload | Reloads config files."));
+                } else { //There is arguments
+                    switch (args[0]){
+                        case "reload":
+                            if(player.hasPermission(PERMISSION.reload)) {
+                                loadConfig();
+                                loadLangFile();
+                                player.sendMessage(powerHourMsg("Config reloaded!"));
+                            }
+                            break;
+                    }
+                }
+
+            }
+            return true;
+        }
+        return false;
+    }
 
 
-
-
+    private String powerHourMsg(String msg){
+        return ChatColor.DARK_AQUA + "[Power Hour] " + ChatColor.AQUA + msg;
+    }
 
     private void loadConfig(){
         config.options().copyDefaults();
         saveDefaultConfig();
+    }
+
+    private void saveMainConfig(){
+        this.saveConfig();
     }
 
     private void saveLangFile(Boolean setDefaults){

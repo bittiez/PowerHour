@@ -11,3 +11,6 @@ permissions:
     PowerHour.PowerHour:
         description: Usage of various PowerHour commands
         default: op
+    PowerHour.reload:
+        description: Reload config files
+        default: op
