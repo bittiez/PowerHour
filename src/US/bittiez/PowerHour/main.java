@@ -43,6 +43,10 @@ public class main extends JavaPlugin implements Listener{
                         player.sendMessage(powerHourMsg("/PowerHour reload | Reloads config files."));
                     if(player.hasPermission(PERMISSION.addArena))
                         player.sendMessage(powerHourMsg("/PowerHour addArena <arenaName> | Add a new arena where you are standing"));
+                    if(player.hasPermission(PERMISSION.delArena))
+                        player.sendMessage(powerHourMsg("/PowerHour delArena <arenaName> | Deletes the specified arena from the config"));
+
+
                 } else { //There is arguments
                     switch (args[0].toLowerCase()){
                         case "reload":
@@ -69,6 +73,21 @@ public class main extends JavaPlugin implements Listener{
                                         player.sendMessage(powerHourMsg("Added the " + newArena.getName() + " arena!"));
                                     else
                                         player.sendMessage(powerHourMsg("Could not save the arena, something went wrong (Make sure there are no other arenas with the same name)."));
+                                }
+                            }
+                            break;
+                        case "delarena":
+                            if(player.hasPermission(PERMISSION.delArena)){
+                                if(args.length < 2){
+                                    player.sendMessage(powerHourMsg("You did not specify a name of the arena to delete! Proper usage:"));
+                                    player.sendMessage(powerHourMsg("/PowerHour delArena arenaName"));
+                                } else {
+                                    if(config.contains("arenas." + args[1])){
+                                        config.set("arenas." + args[1], null);
+                                        saveConfig();
+                                        player.sendMessage(powerHourMsg("Deleted the " + args[1] + " arena!"));
+                                    } else
+                                        player.sendMessage(args[1] + " does not seem to exist!");
                                 }
                             }
                             break;

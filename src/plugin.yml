@@ -17,3 +17,6 @@ permissions:
     PowerHour.addArena:
         description: Allows adding new arena where you are standing
         default: op
+    PowerHour.delArena:
+        description: Allows deleting arenas
+        default: op

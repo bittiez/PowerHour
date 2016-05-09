@@ -6,4 +6,5 @@ package US.bittiez.PowerHour;
 public class PERMISSION {
     public static String reload = "PowerHour.reload";
     public static String addArena = "PowerHour.addArena";
+    public static String delArena = "PowerHour.delArena";
 }
