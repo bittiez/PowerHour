@@ -7,6 +7,7 @@ public class Arena {
     private int X, Y, Z;
     private String world;
     private String name;
+    private String region;
 
     public int getX(){
         return X;
@@ -23,6 +24,7 @@ public class Arena {
     public String getName(){
         return name;
     }
+    public String getRegion() { return region; }
 
 
     public void setX(int x){
@@ -40,17 +42,19 @@ public class Arena {
     public void setName(String name){
         this.name = name;
     }
+    public void setRegion(String region) {this.region = region;}
 
     public Arena(){
 
     }
 
-    public Arena(int x, int y, int z, String world, String name){
+    public Arena(int x, int y, int z, String world, String name, String region){
         setX(x);
         setY(y);
         setZ(z);
         setWorld(world);
         setName(name);
+        setRegion(region);
     }
 
 }

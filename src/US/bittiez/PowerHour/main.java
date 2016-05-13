@@ -1,5 +1,9 @@
 package US.bittiez.PowerHour;
 
+import com.sk89q.worldguard.bukkit.RegionContainer;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -8,11 +12,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -44,7 +48,7 @@ public class main extends JavaPlugin implements Listener{
                     if(player.hasPermission(PERMISSION.reload))
                         player.sendMessage(powerHourMsg("/PowerHour reload | Reloads config files."));
                     if(player.hasPermission(PERMISSION.addArena))
-                        player.sendMessage(powerHourMsg("/PowerHour addArena <arenaName> | Add a new arena where you are standing"));
+                        player.sendMessage(powerHourMsg("/PowerHour addArena <arenaName> <regionName> | Add a new arena where you are standing, the regionName is the worldguard region name."));
                     if(player.hasPermission(PERMISSION.delArena))
                         player.sendMessage(powerHourMsg("/PowerHour delArena <arenaName> | Deletes the specified arena from the config"));
                     if(player.hasPermission(PERMISSION.listArenas))
@@ -62,10 +66,26 @@ public class main extends JavaPlugin implements Listener{
                             break;
                         case "addarena":
                             if(player.hasPermission(PERMISSION.addArena)){
-                                if(args.length < 2) {
-                                    player.sendMessage(powerHourMsg("You did not specify a name for the Arena! Proper usage:"));
-                                    player.sendMessage(powerHourMsg("/PowerHour addArena arenaName"));
+                                if(args.length < 3) {
+                                    player.sendMessage(powerHourMsg("You did not specify everything needed for the Arena! Proper usage:"));
+                                    player.sendMessage(powerHourMsg("/PowerHour addArena arenaName regionName"));
                                 } else {
+                                    RegionContainer container = getWorldGuard().getRegionContainer();
+                                    RegionManager regions = container.get(player.getWorld());
+                                    ProtectedRegion region;
+                                    if (regions != null) {
+                                        region = regions.getRegion(args[2]);
+                                    } else {
+                                        // The world has no region support or region data failed to load
+                                        player.sendMessage(powerHourMsg("There is an issue with WorldGuard, please double check you followed all instructions."));
+                                        break;
+                                    }
+
+                                    if(region == null){
+                                        player.sendMessage(powerHourMsg("That region does not seem to exist, please try again."));
+                                        break;
+                                    }
+
                                     Arena newArena = new Arena();
                                     newArena.setName(args[1]);
                                     newArena.setWorld(player.getWorld().getName());
@@ -73,6 +93,7 @@ public class main extends JavaPlugin implements Listener{
                                     newArena.setX(loc.getX());
                                     newArena.setY(loc.getY());
                                     newArena.setZ(loc.getZ());
+                                    newArena.setRegion(region.getId());
                                     if (saveNewArena(newArena))
                                         player.sendMessage(powerHourMsg("Added the " + newArena.getName() + " arena!"));
                                     else
@@ -115,12 +136,24 @@ public class main extends JavaPlugin implements Listener{
         return false;
     }
 
+    private WorldGuardPlugin getWorldGuard() {
+        Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
+
+        // WorldGuard may not be loaded
+        if (plugin == null || !(plugin instanceof WorldGuardPlugin)) {
+            return null; // Maybe you want throw an exception instead
+        }
+
+        return (WorldGuardPlugin) plugin;
+    }
+
     private boolean saveNewArena(Arena arena){
         if(!config.contains("arenas." + arena.getName())) {
             config.set("arenas." + arena.getName() + ".locX", arena.getX());
             config.set("arenas." + arena.getName() + ".locY", arena.getY());
             config.set("arenas." + arena.getName() + ".locZ", arena.getZ());
             config.set("arenas." + arena.getName() + ".world", arena.getWorld());
+            config.set("arenas." + arena.getName() + ".region", arena.getRegion());
             saveConfig();
         } else
             return false;
