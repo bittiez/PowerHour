@@ -1,10 +1,14 @@
 package US.bittiez.PowerHour;
 
+import com.sk89q.worldguard.bukkit.BukkitUtil;
 import com.sk89q.worldguard.bukkit.RegionContainer;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -17,6 +21,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -53,6 +59,8 @@ public class main extends JavaPlugin implements Listener{
                         player.sendMessage(powerHourMsg("/PowerHour delArena <arenaName> | Deletes the specified arena from the config"));
                     if(player.hasPermission(PERMISSION.listArenas))
                         player.sendMessage(powerHourMsg("/PowerHour list | Lists all arenas set up"));
+                    if(player.hasPermission(PERMISSION.checkArena))
+                        player.sendMessage("/PowerHour checkArena | Checks if you are in an arena, and gives you the arena name if you are");
 
 
                 } else { //There is arguments
@@ -70,16 +78,7 @@ public class main extends JavaPlugin implements Listener{
                                     player.sendMessage(powerHourMsg("You did not specify everything needed for the Arena! Proper usage:"));
                                     player.sendMessage(powerHourMsg("/PowerHour addArena arenaName regionName"));
                                 } else {
-                                    RegionContainer container = getWorldGuard().getRegionContainer();
-                                    RegionManager regions = container.get(player.getWorld());
-                                    ProtectedRegion region;
-                                    if (regions != null) {
-                                        region = regions.getRegion(args[2]);
-                                    } else {
-                                        // The world has no region support or region data failed to load
-                                        player.sendMessage(powerHourMsg("There is an issue with WorldGuard, please double check you followed all instructions."));
-                                        break;
-                                    }
+                                    ProtectedRegion region = getRegion(args[2], player.getWorld());
 
                                     if(region == null){
                                         player.sendMessage(powerHourMsg("That region does not seem to exist, please try again."));
@@ -127,6 +126,25 @@ public class main extends JavaPlugin implements Listener{
                                 player.sendMessage(powerHourMsg(sb.toString()));
                             }
                             break;
+                        case "checkarena":
+                            if(player.hasPermission(PERMISSION.checkArena)){
+                                List<Arena> arenas = getAllArenas();
+                                boolean inRegion = false;
+                                for(Arena a : arenas){
+                                    ProtectedRegion region = getRegion(a.getRegion(), Bukkit.getWorld(a.getWorld()));
+                                    if(region != null){
+                                        Location loc = player.getLocation();
+                                        if(region.contains(BukkitUtil.toVector(loc))){
+                                            player.sendMessage(powerHourMsg("You are in " + a.getName() + " arena!"));
+                                            inRegion = true;
+                                        }
+                                    }
+                                }
+                                if(!inRegion){
+                                    player.sendMessage(powerHourMsg("You are not in any arena!"));
+                                }
+                            }
+                            break;
                     }
                 }
 
@@ -134,6 +152,42 @@ public class main extends JavaPlugin implements Listener{
             return true;
         }
         return false;
+    }
+
+    private ProtectedRegion getRegion(String name, World world){
+        RegionContainer container = getWorldGuard().getRegionContainer();
+        RegionManager regions = container.get(world);
+        ProtectedRegion region;
+        if (regions != null) {
+            region = regions.getRegion(name);
+            if(region != null)
+                return region;
+        }
+        return null;
+    }
+
+    private List<Arena> getAllArenas(){
+        Set arenaList = config.getConfigurationSection("arenas").getKeys(false);
+        List<Arena> arenas = new ArrayList<>();
+        for(Object s : arenaList){
+            Arena a = getArena(s.toString());
+            if(a != null)
+                arenas.add(a);
+        }
+        return arenas;
+    }
+
+    private Arena getArena(String name){
+        if(config.contains("arenas." + name)){
+            Arena arena = new Arena();
+            arena.setName(name);
+            arena.setRegion(config.getString("arenas." + name + ".region"));
+            arena.setWorld(config.getString("arenas." + name + ".world"));
+            arena.setZ(config.getInt("arenas." + name + ".locZ"));
+            arena.setY(config.getInt("arenas." + name + ".locY"));
+            arena.setX(config.getInt("arenas." + name + ".locX"));
+            return arena;
+        } else return null;
     }
 
     private WorldGuardPlugin getWorldGuard() {

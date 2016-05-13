@@ -2,7 +2,7 @@ name: PowerHour
 version: 1.0.0
 author: bittiez
 main: US.bittiez.PowerHour.main
-depend: [WorldGuard]
+depend: [WorldGuard, WorldEdit]
 commands:
     PowerHour:
         description: Various PowerHour commands.

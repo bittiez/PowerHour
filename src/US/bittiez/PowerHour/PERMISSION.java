@@ -8,4 +8,5 @@ public class PERMISSION {
     public static String addArena = "PowerHour.addArena";
     public static String delArena = "PowerHour.delArena";
     public static String listArenas = "PowerHour.list";
+    public static String checkArena = "PowerHour.check";
 }
