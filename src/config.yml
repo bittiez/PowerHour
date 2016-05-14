@@ -1,5 +1,3 @@
 powerHours:
-  - 0900
-  - 2000
-length:
-  - 60
+  - '19:30'
+length: 60

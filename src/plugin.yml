@@ -24,3 +24,6 @@ permissions:
     PowerHour.listArenas:
         description: Allows listing all arenas
         default: op
+    PowerHour.checkArenas:
+        description: Allows checking what arena you are standing in(If any at all)
+        default: op

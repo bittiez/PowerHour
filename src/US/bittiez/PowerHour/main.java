@@ -21,19 +21,26 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.logging.Logger;
-
 /**
  * Created by tadtaylor on 5/7/16.
  */
 public class main extends JavaPlugin implements Listener{
+    public boolean powerHour = false;
+    public Arena powerHourArena = null;
+    public Calendar powerHourEnd = null;
+
+    public ArrayList<Date> powerHours;
+
+
     private static Logger log;
     private FileConfiguration lang;
     private FileConfiguration config = getConfig();
     private String langFile = "lang.yml";
+    private int checkDelay = 60;
 
     @Override
     public void onEnable(){
@@ -41,7 +48,79 @@ public class main extends JavaPlugin implements Listener{
 
         loadConfig();
         loadLangFile();
+
+        this.powerHours = new ArrayList<>();
+        getTimesFromConfig();
+
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() { public void run() {checkPowerHour();} }, checkDelay * 20,  checkDelay * 20);
     }
+
+    private void getTimesFromConfig(){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+
+
+        List<String> powerHours = config.getStringList("powerHours");
+        log.info(powerHours.toString());
+        for(String s : powerHours) {
+            try
+            {
+                Date date = simpleDateFormat.parse(s);
+                this.powerHours.add(date);
+            }
+            catch (ParseException ex)
+            {
+                log.warning("Could not parse the following time: " + s);
+            }
+        }
+    }
+
+    private void checkPowerHour(){
+        long hour, minute;
+
+        Calendar now = Calendar.getInstance();
+
+        hour = now.get(Calendar.HOUR_OF_DAY);
+        minute = now.get(Calendar.MINUTE);
+        log.info("sysTime " + hour + ":" + minute);
+
+        if(!powerHour) {
+            Calendar cal = Calendar.getInstance();
+            for (Date t : this.powerHours) {
+                int hr, mn;
+                cal.setTime(t);
+                hr = cal.get(Calendar.HOUR_OF_DAY);
+                mn = cal.get(Calendar.MINUTE);
+                if(hour >= hr && minute >= mn){
+                    //Start power hour!
+                    log.info("Start: " + hr + ":" + mn);
+                    cal.add(Calendar.MINUTE, config.getInt("length"));
+                    powerHourEnd = cal;
+                    log.info("End: " + cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE));
+                    log.info("Power hour beginning!!!");
+                    powerHour = true;
+                    return;
+                }
+            }
+        } else {
+            //Check if power hour ending
+            if(powerHourEnd != null){
+                int hr = powerHourEnd.get(Calendar.HOUR_OF_DAY);
+                int mn = powerHourEnd.get(Calendar.MINUTE);
+
+                if(hour >= hr && minute >= mn) {
+                    powerHourEnd = null;
+                    powerHourArena = null;
+                    log.info("Power hour ending!!!");
+                    powerHour = false;
+                }
+            } else
+            {
+                log.info("Power hour ending!!!");
+                powerHour = false;
+            }
+        }
+    }
+
 
     public boolean onCommand(CommandSender who, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("powerhour")) {
@@ -215,6 +294,7 @@ public class main extends JavaPlugin implements Listener{
     }
 
     private String powerHourMsg(String msg){
+        msg = ChatColor.translateAlternateColorCodes('&', msg);
         return ChatColor.DARK_AQUA + "[Power Hour] " + ChatColor.AQUA + msg;
     }
 
