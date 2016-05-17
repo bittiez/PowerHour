@@ -15,8 +15,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.material.PistonExtensionMaterial;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -53,6 +59,8 @@ public class main extends JavaPlugin implements Listener{
         getTimesFromConfig();
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() { public void run() {checkPowerHour();} }, checkDelay * 20,  checkDelay * 20);
+        PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(this, this);
     }
 
     private void getTimesFromConfig(){
@@ -74,6 +82,27 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
+
+    private void startPowerHour(Calendar cal){
+        if(!powerHour) {
+            cal.add(Calendar.MINUTE, config.getInt("length"));
+            powerHourEnd = cal;
+            log.info("End: " + cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE));
+            log.info("Power hour beginning!!!");
+
+            List<Arena> arenas = getAllArenas();
+
+            if (arenas.size() > 1) {
+                Random r = new Random();
+                int a = r.nextInt(arenas.size());
+                powerHourArena = arenas.get(a);
+            } else {
+                powerHourArena = arenas.get(0);
+            }
+            powerHour = true;
+        }
+    }
+
     private void checkPowerHour(){
         long hour, minute;
 
@@ -81,7 +110,6 @@ public class main extends JavaPlugin implements Listener{
 
         hour = now.get(Calendar.HOUR_OF_DAY);
         minute = now.get(Calendar.MINUTE);
-        log.info("sysTime " + hour + ":" + minute);
 
         if(!powerHour) {
             Calendar cal = Calendar.getInstance();
@@ -93,11 +121,7 @@ public class main extends JavaPlugin implements Listener{
                 if(hour >= hr && minute >= mn){
                     //Start power hour!
                     log.info("Start: " + hr + ":" + mn);
-                    cal.add(Calendar.MINUTE, config.getInt("length"));
-                    powerHourEnd = cal;
-                    log.info("End: " + cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE));
-                    log.info("Power hour beginning!!!");
-                    powerHour = true;
+                    startPowerHour(cal);
                     return;
                 }
             }
@@ -122,6 +146,35 @@ public class main extends JavaPlugin implements Listener{
     }
 
 
+    @EventHandler
+    public void onDeath(PlayerDeathEvent e) {
+        if(powerHour && powerHourArena != null) {
+            Player who = e.getEntity();
+            ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
+            if(region != null){
+                if(region.contains(BukkitUtil.toVector(who.getLocation()))){
+                    e.setKeepInventory(true);
+                    e.setKeepLevel(true);
+                    e.setDeathMessage(powerHourMsg(who.getDisplayName() + " was killed during PowerHour!"));
+
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerRespawn(final PlayerRespawnEvent event) {
+        if(powerHour && powerHourArena != null) {
+            Player who = event.getPlayer();
+            ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
+            if (region != null) {
+                if (region.contains(BukkitUtil.toVector(who.getLocation()))) {
+                    event.setRespawnLocation(new Location(Bukkit.getWorld(powerHourArena.getWorld()), powerHourArena.getX(), powerHourArena.getY(), powerHourArena.getZ()));
+                }
+            }
+        }
+    }
+
     public boolean onCommand(CommandSender who, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("powerhour")) {
             if (who instanceof Player) {
@@ -139,7 +192,9 @@ public class main extends JavaPlugin implements Listener{
                     if(player.hasPermission(PERMISSION.listArenas))
                         player.sendMessage(powerHourMsg("/PowerHour list | Lists all arenas set up"));
                     if(player.hasPermission(PERMISSION.checkArena))
-                        player.sendMessage("/PowerHour checkArena | Checks if you are in an arena, and gives you the arena name if you are");
+                        player.sendMessage(powerHourMsg("/PowerHour checkArena | Checks if you are in an arena, and gives you the arena name if you are"));
+                    if(player.hasPermission(PERMISSION.startPowerHour))
+                        player.sendMessage(powerHourMsg("/PowerHour startPowerHour | Forces a PowerHour to start"));
 
 
                 } else { //There is arguments
@@ -148,6 +203,8 @@ public class main extends JavaPlugin implements Listener{
                             if(player.hasPermission(PERMISSION.reload)) {
                                 loadConfig();
                                 loadLangFile();
+                                this.powerHours = new ArrayList<>();
+                                getTimesFromConfig();
                                 player.sendMessage(powerHourMsg("Config reloaded!"));
                             }
                             break;
@@ -222,6 +279,12 @@ public class main extends JavaPlugin implements Listener{
                                 if(!inRegion){
                                     player.sendMessage(powerHourMsg("You are not in any arena!"));
                                 }
+                            }
+                            break;
+                        case "startpowerhour":
+                            if(player.hasPermission(PERMISSION.startPowerHour)){
+                                player.sendMessage(powerHourMsg("Attempting to start a PowerHour(This will not work if a PowerHour is already running)"));
+                                startPowerHour(Calendar.getInstance());
                             }
                             break;
                     }

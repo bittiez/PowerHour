@@ -27,3 +27,6 @@ permissions:
     PowerHour.checkArenas:
         description: Allows checking what arena you are standing in(If any at all)
         default: op
+    PowerHour.startPowerHour:
+        description: Allows forcing a power hour to start
+        default: op
