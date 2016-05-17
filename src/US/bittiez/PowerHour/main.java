@@ -20,7 +20,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.material.PistonExtensionMaterial;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -82,13 +81,16 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
+    private String replaceTag(String string, String tag, String replacement){
+        return string.replaceAll("(\\["+tag+"\\])", replacement);
+    }
 
     private void startPowerHour(Calendar cal){
         if(!powerHour) {
             cal.add(Calendar.MINUTE, config.getInt("length"));
             powerHourEnd = cal;
             log.info("End: " + cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE));
-            log.info("Power hour beginning!!!");
+            log.info("Power hour beginning!");
 
             List<Arena> arenas = getAllArenas();
 
@@ -100,6 +102,8 @@ public class main extends JavaPlugin implements Listener{
                 powerHourArena = arenas.get(0);
             }
             powerHour = true;
+
+            getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(lang.getString("powerHourStart"), "arena", powerHourArena.getName())));
         }
     }
 
@@ -132,16 +136,18 @@ public class main extends JavaPlugin implements Listener{
                 int mn = powerHourEnd.get(Calendar.MINUTE);
 
                 if(hour >= hr && minute >= mn) {
+                    getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(lang.getString("powerHourEnd"), "arena", powerHourArena.getName())));
                     powerHourEnd = null;
                     powerHourArena = null;
-                    log.info("Power hour ending!!!");
+                    log.info("Power hour ending!");
                     powerHour = false;
                 }
             } else
             {
-                log.info("Power hour ending!!!");
+                log.info("Power hour ending!");
                 powerHour = false;
             }
+
         }
     }
 
@@ -155,8 +161,7 @@ public class main extends JavaPlugin implements Listener{
                 if(region.contains(BukkitUtil.toVector(who.getLocation()))){
                     e.setKeepInventory(true);
                     e.setKeepLevel(true);
-                    e.setDeathMessage(powerHourMsg(who.getDisplayName() + " was killed during PowerHour!"));
-
+                    e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(replaceTag(lang.getString("playerDeath"), "player", who.getDisplayName()), "arena", powerHourArena.getName())));
                 }
             }
         }
@@ -374,6 +379,9 @@ public class main extends JavaPlugin implements Listener{
         if(setDefaults) {
             lang.set("version", 1);
             lang.set("name", "&6Power Hour");
+            lang.set("powerHourStart", "PowerHour is beginning in the [arena] arena!");
+            lang.set("powerHourEnd", "PowerHour is ending for the [arena] arena!");
+            lang.set("playerDeath", "[player] has died during PowerHour in the [arena] arena!");
         }
 
         try {
