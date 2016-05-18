@@ -199,6 +199,13 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
+    private void reloadPlugin(){
+        loadConfig();
+        loadLangFile();
+        this.powerHours = new ArrayList<>();
+        getTimesFromConfig();
+    }
+
     public boolean onCommand(CommandSender who, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("powerhour")) {
             if (who instanceof Player) {
@@ -225,10 +232,7 @@ public class main extends JavaPlugin implements Listener{
                     switch (args[0].toLowerCase()){
                         case "reload":
                             if(player.hasPermission(PERMISSION.reload)) {
-                                loadConfig();
-                                loadLangFile();
-                                this.powerHours = new ArrayList<>();
-                                getTimesFromConfig();
+                                reloadPlugin();
                                 player.sendMessage(powerHourMsg("Config reloaded!"));
                             }
                             break;
@@ -319,6 +323,20 @@ public class main extends JavaPlugin implements Listener{
                     }
                 }
 
+            } else {
+                /*
+                    Console Sender
+                 */
+                switch (args[0].toLowerCase()){
+                    case "reload":
+                        reloadPlugin();
+                        who.sendMessage("Config reloaded!");
+                        break;
+                    case "startpowerhour":
+                        who.sendMessage("Attempting to start a PowerHour(This will not work if a PowerHour is already running)");
+                        startPowerHour(Calendar.getInstance());
+                        break;
+                }
             }
             return true;
         }
