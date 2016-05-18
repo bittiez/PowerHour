@@ -94,6 +94,17 @@ public class main extends JavaPlugin implements Listener{
         return string.replaceAll("(\\["+tag+"\\])", replacement);
     }
 
+    private String replaceTag(String string, String[] tag, String[] replacement){
+        if(tag.length != replacement.length)
+            return string;
+        else {
+            for (int i = 0; i < tag.length; i++) {
+                string = replaceTag(string, tag[i], replacement[i]);
+            }
+            return string;
+        }
+    }
+
     private void startPowerHour(Calendar cal){
         if(!powerHour) {
             cal.add(Calendar.MINUTE, config.getInt("length"));
@@ -184,7 +195,20 @@ public class main extends JavaPlugin implements Listener{
                 if(region.contains(BukkitUtil.toVector(who.getLocation()))){
                     e.setKeepInventory(true);
                     e.setKeepLevel(true);
-                    e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(replaceTag(lang.getString("playerDeath"), "player", who.getDisplayName()), "arena", powerHourArena.getName())));
+                    Player killer = who.getKiller();
+                    if(killer != null){
+                        e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(
+                                lang.getString("playerDeathByPlayer"),
+                                new String[]{"player", "killer", "arena"},
+                                new String[]{who.getDisplayName(), killer.getDisplayName(), powerHourArena.getName()}
+                        )));
+                    } else {
+                        e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(
+                                lang.getString("playerDeath"),
+                                new String[]{"player", "arena"},
+                                new String[]{who.getDisplayName(), powerHourArena.getName()}
+                        )));
+                    }
                 }
             }
         }
@@ -436,6 +460,7 @@ public class main extends JavaPlugin implements Listener{
             lang.set("powerHourStart", "PowerHour is beginning in the [arena] arena!");
             lang.set("powerHourEnd", "PowerHour is ending for the [arena] arena!");
             lang.set("playerDeath", "[player] has died during PowerHour in the [arena] arena!");
+            lang.set("playerDeathByPlayer", "[killer] killed [player] during PowerHour in the [arena] arena!");
             lang.set("playerLogin", "Hey [player]! PowerHour is currently active at the [arena] arena!");
         }
 
