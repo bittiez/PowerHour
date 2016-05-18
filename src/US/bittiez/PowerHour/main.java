@@ -143,9 +143,11 @@ public class main extends JavaPlugin implements Listener{
                 cal.setTime(t);
                 int hr = cal.get(Calendar.HOUR_OF_DAY);
                 int mn = cal.get(Calendar.MINUTE);
-                cal.add(Calendar.MINUTE, config.getInt("length"));
-                int hrEnd = cal.get(Calendar.HOUR_OF_DAY);
-                int mnEnd = cal.get(Calendar.MINUTE);
+                Calendar cal2 = cal;
+                cal2.add(Calendar.MINUTE, config.getInt("length"));
+                int hrEnd = cal2.get(Calendar.HOUR_OF_DAY);
+                int mnEnd = cal2.get(Calendar.MINUTE);
+
                 if((hour >= hr && minute >= mn) && (hour <= hrEnd && minute <= mnEnd)){
                     //Start power hour!
                     log.info("Start: " + hr + ":" + mn);
@@ -180,7 +182,9 @@ public class main extends JavaPlugin implements Listener{
             Player who = event.getPlayer();
             if(who.hasPermission(PERMISSION.onJoinMessage)) {
                 who.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        replaceTag(replaceTag(config.getString("playerLogin"), "player", who.getDisplayName()), "arena", powerHourArena.getName())
+                        replaceTag(config.getString("playerLogin"),
+                                new String[]{"player",             "arena"},
+                                new String[]{who.getDisplayName(), powerHourArena.getName()})
                 ));
             }
         }
