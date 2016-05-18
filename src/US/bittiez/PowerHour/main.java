@@ -140,11 +140,13 @@ public class main extends JavaPlugin implements Listener{
         if(!powerHour) {
             Calendar cal = Calendar.getInstance();
             for (Date t : this.powerHours) {
-                int hr, mn;
                 cal.setTime(t);
-                hr = cal.get(Calendar.HOUR_OF_DAY);
-                mn = cal.get(Calendar.MINUTE);
-                if(hour >= hr && minute >= mn){
+                int hr = cal.get(Calendar.HOUR_OF_DAY);
+                int mn = cal.get(Calendar.MINUTE);
+                cal.add(Calendar.MINUTE, config.getInt("length"));
+                int hrEnd = cal.get(Calendar.HOUR_OF_DAY);
+                int mnEnd = cal.get(Calendar.MINUTE);
+                if((hour >= hr && minute >= mn) && (hour <= hrEnd && minute <= mnEnd)){
                     //Start power hour!
                     log.info("Start: " + hr + ":" + mn);
                     startPowerHour(cal);
