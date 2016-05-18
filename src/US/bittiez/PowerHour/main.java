@@ -320,10 +320,10 @@ public class main extends JavaPlugin implements Listener{
                             break;
                         case "list":
                             if(player.hasPermission(PERMISSION.listArenas)){
-                                Set arenaList = config.getConfigurationSection("arenas").getKeys(false);
+                                List<Arena> arenaList = getAllArenas();
                                 StringBuilder sb = new StringBuilder();
-                                for(Object s : arenaList){
-                                    sb.append(s.toString() + " ");
+                                for(Arena s : arenaList){
+                                    sb.append(s.getName() + ", ");
                                 }
 
                                 player.sendMessage(powerHourMsg(sb.toString()));
