@@ -31,10 +31,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
+
 /**
  * Created by tadtaylor on 5/7/16.
  */
-public class main extends JavaPlugin implements Listener{
+public class main extends JavaPlugin implements Listener {
     public boolean powerHour = false;
     public Arena powerHourArena = null;
     public Calendar powerHourEnd = null;
@@ -51,7 +52,7 @@ public class main extends JavaPlugin implements Listener{
     private int currentLangVersion = 3;
 
     @Override
-    public void onEnable(){
+    public void onEnable() {
         log = getLogger();
 
         loadConfig();
@@ -60,42 +61,44 @@ public class main extends JavaPlugin implements Listener{
         this.powerHours = new ArrayList<>();
         getTimesFromConfig();
 
-        if(getAllArenas().size() < 1)
-        {
+        if (getAllArenas().size() < 1) {
             disabled = true;
             log.warning("PowerHour did not detect any arenas, please set up at least one!");
         }
 
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() { public void run() {checkPowerHour();} }, checkDelay * 20,  checkDelay * 20);
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+            public void run() {
+                checkPowerHour();
+            }
+        }, checkDelay * 20, checkDelay * 20);
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(this, this);
     }
 
-    private void getTimesFromConfig(){
+    private void getTimesFromConfig() {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
 
 
         List<String> powerHours = config.getStringList("powerHours");
         log.info(powerHours.toString());
-        for(String s : powerHours) {
-            try
-            {
+        for (String s : powerHours) {
+            try {
                 Date date = simpleDateFormat.parse(s);
                 this.powerHours.add(date);
-            }
-            catch (ParseException ex)
-            {
+            } catch (ParseException ex) {
                 log.warning("Could not parse the following time: " + s);
             }
         }
     }
 
-    private String replaceTag(String string, String tag, String replacement){
-        return string.replaceAll("(\\["+tag+"\\])", replacement);
+    private String replaceTag(String string, String tag, String replacement) {
+        if (tag == null || replacement == null || string == null)
+            return string;
+        return string.replaceAll("(\\[" + tag + "\\])", replacement);
     }
 
-    private String replaceTag(String string, String[] tag, String[] replacement){
-        if(tag.length != replacement.length)
+    private String replaceTag(String string, String[] tag, String[] replacement) {
+        if (tag.length != replacement.length)
             return string;
         else {
             for (int i = 0; i < tag.length; i++) {
@@ -105,8 +108,8 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
-    private void startPowerHour(Calendar cal){
-        if(!powerHour) {
+    private void startPowerHour(Calendar cal) {
+        if (!powerHour) {
             cal.add(Calendar.MINUTE, config.getInt("length"));
             powerHourEnd = cal;
             log.info("End: " + cal.get(Calendar.HOUR_OF_DAY) + ":" + cal.get(Calendar.MINUTE));
@@ -127,8 +130,8 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
-    private void checkPowerHour(){
-        if(disabled)
+    private void checkPowerHour() {
+        if (disabled)
             return;
         long hour, minute;
 
@@ -137,7 +140,7 @@ public class main extends JavaPlugin implements Listener{
         hour = now.get(Calendar.HOUR_OF_DAY);
         minute = now.get(Calendar.MINUTE);
 
-        if(!powerHour) {
+        if (!powerHour) {
             Calendar cal = Calendar.getInstance();
             for (Date t : this.powerHours) {
                 cal.setTime(t);
@@ -148,7 +151,7 @@ public class main extends JavaPlugin implements Listener{
                 int hrEnd = cal2.get(Calendar.HOUR_OF_DAY);
                 int mnEnd = cal2.get(Calendar.MINUTE);
 
-                if((hour >= hr && minute >= mn) && (hour <= hrEnd && minute <= mnEnd)){
+                if ((hour >= hr && minute >= mn) && (hour <= hrEnd && minute <= mnEnd)) {
                     //Start power hour!
                     log.info("Start: " + hr + ":" + mn);
                     startPowerHour(cal);
@@ -157,11 +160,11 @@ public class main extends JavaPlugin implements Listener{
             }
         } else {
             //Check if power hour ending
-            if(powerHourEnd != null){
+            if (powerHourEnd != null) {
                 int hr = powerHourEnd.get(Calendar.HOUR_OF_DAY);
                 int mn = powerHourEnd.get(Calendar.MINUTE);
 
-                if(hour >= hr && minute >= mn) {
+                if (hour >= hr && minute >= mn) {
                     getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(lang.getString("powerHourEnd"), "arena", powerHourArena.getName())));
                     powerHourEnd = null;
                     powerHourArena = null;
@@ -175,34 +178,35 @@ public class main extends JavaPlugin implements Listener{
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent event){
-        if(disabled)
+    public void onJoin(PlayerJoinEvent event) {
+        if (disabled)
             return;
-        if(powerHour && powerHourArena != null) {
+        if (powerHour && powerHourArena != null) {
             Player who = event.getPlayer();
-            if(who.hasPermission(PERMISSION.onJoinMessage)) {
-                who.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        replaceTag(config.getString("playerLogin"),
-                                new String[]{"player",             "arena"},
-                                new String[]{who.getDisplayName(), powerHourArena.getName()})
-                ));
+            if (who.hasPermission(PERMISSION.onJoinMessage)) {
+                if (lang.contains("playerLogin"))
+                    who.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            replaceTag(lang.getString("playerLogin"),
+                                    new String[]{"player", "arena"},
+                                    new String[]{who.getDisplayName(), powerHourArena.getName()})
+                    ));
             }
         }
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
-        if(disabled)
+        if (disabled)
             return;
-        if(powerHour && powerHourArena != null) {
+        if (powerHour && powerHourArena != null) {
             Player who = e.getEntity();
             ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
-            if(region != null){
-                if(region.contains(BukkitUtil.toVector(who.getLocation()))){
+            if (region != null) {
+                if (region.contains(BukkitUtil.toVector(who.getLocation()))) {
                     e.setKeepInventory(true);
                     e.setKeepLevel(true);
                     Player killer = who.getKiller();
-                    if(killer != null){
+                    if (killer != null) {
                         e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(
                                 lang.getString("playerDeathByPlayer"),
                                 new String[]{"player", "killer", "arena"},
@@ -222,9 +226,9 @@ public class main extends JavaPlugin implements Listener{
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(final PlayerRespawnEvent event) {
-        if(disabled)
+        if (disabled)
             return;
-        if(powerHour && powerHourArena != null) {
+        if (powerHour && powerHourArena != null) {
             Player who = event.getPlayer();
             ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
             if (region != null) {
@@ -235,7 +239,7 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
-    private void reloadPlugin(){
+    private void reloadPlugin() {
         loadConfig();
         loadLangFile();
         this.powerHours = new ArrayList<>();
@@ -245,42 +249,42 @@ public class main extends JavaPlugin implements Listener{
     public boolean onCommand(CommandSender who, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("powerhour")) {
             if (who instanceof Player) {
-                Player player = (Player)who;
+                Player player = (Player) who;
 
-                if(args.length < 1){ //Did not specify any arguments
+                if (args.length < 1) { //Did not specify any arguments
                     player.sendMessage(powerHourMsg("----- Available commands: -----"));
 
-                    if(player.hasPermission(PERMISSION.reload))
+                    if (player.hasPermission(PERMISSION.reload))
                         player.sendMessage(powerHourMsg("/PowerHour reload | Reloads config files."));
-                    if(player.hasPermission(PERMISSION.addArena))
+                    if (player.hasPermission(PERMISSION.addArena))
                         player.sendMessage(powerHourMsg("/PowerHour addArena <arenaName> <regionName> | Add a new arena where you are standing, the regionName is the worldguard region name."));
-                    if(player.hasPermission(PERMISSION.delArena))
+                    if (player.hasPermission(PERMISSION.delArena))
                         player.sendMessage(powerHourMsg("/PowerHour delArena <arenaName> | Deletes the specified arena from the config"));
-                    if(player.hasPermission(PERMISSION.listArenas))
+                    if (player.hasPermission(PERMISSION.listArenas))
                         player.sendMessage(powerHourMsg("/PowerHour list | Lists all arenas set up"));
-                    if(player.hasPermission(PERMISSION.checkArena))
+                    if (player.hasPermission(PERMISSION.checkArena))
                         player.sendMessage(powerHourMsg("/PowerHour checkArena | Checks if you are in an arena, and gives you the arena name if you are"));
-                    if(player.hasPermission(PERMISSION.startPowerHour))
+                    if (player.hasPermission(PERMISSION.startPowerHour))
                         player.sendMessage(powerHourMsg("/PowerHour startPowerHour | Forces a PowerHour to start"));
 
 
                 } else { //There is arguments
-                    switch (args[0].toLowerCase()){
+                    switch (args[0].toLowerCase()) {
                         case "reload":
-                            if(player.hasPermission(PERMISSION.reload)) {
+                            if (player.hasPermission(PERMISSION.reload)) {
                                 reloadPlugin();
                                 player.sendMessage(powerHourMsg("Config reloaded!"));
                             }
                             break;
                         case "addarena":
-                            if(player.hasPermission(PERMISSION.addArena)){
-                                if(args.length < 3) {
+                            if (player.hasPermission(PERMISSION.addArena)) {
+                                if (args.length < 3) {
                                     player.sendMessage(powerHourMsg("You did not specify everything needed for the Arena! Proper usage:"));
                                     player.sendMessage(powerHourMsg("/PowerHour addArena arenaName regionName"));
                                 } else {
                                     ProtectedRegion region = getRegion(args[2], player.getWorld());
 
-                                    if(region == null){
+                                    if (region == null) {
                                         player.sendMessage(powerHourMsg("That region does not seem to exist, please try again."));
                                         break;
                                     }
@@ -288,34 +292,33 @@ public class main extends JavaPlugin implements Listener{
                                     Arena newArena = new Arena();
                                     newArena.setName(args[1]);
                                     newArena.setWorld(player.getWorld().getName());
-                                    Block loc  = player.getLocation().getBlock();
+                                    Block loc = player.getLocation().getBlock();
                                     newArena.setX(loc.getX());
                                     newArena.setY(loc.getY());
                                     newArena.setZ(loc.getZ());
                                     newArena.setRegion(region.getId());
                                     if (saveNewArena(newArena)) {
                                         player.sendMessage(powerHourMsg("Added the " + newArena.getName() + " arena!"));
-                                        if(disabled){
+                                        if (disabled) {
                                             disabled = false;
                                             log.info("First arena added, re-enabling PowerHour!");
                                         }
-                                    }
-                                    else
+                                    } else
                                         player.sendMessage(powerHourMsg("Could not save the arena, something went wrong (Make sure there are no other arenas with the same name)."));
                                 }
                             }
                             break;
                         case "delarena":
-                            if(player.hasPermission(PERMISSION.delArena)){
-                                if(args.length < 2){
+                            if (player.hasPermission(PERMISSION.delArena)) {
+                                if (args.length < 2) {
                                     player.sendMessage(powerHourMsg("You did not specify a name of the arena to delete! Proper usage:"));
                                     player.sendMessage(powerHourMsg("/PowerHour delArena arenaName"));
                                 } else {
-                                    if(config.contains("arenas." + args[1])){
+                                    if (config.contains("arenas." + args[1])) {
                                         config.set("arenas." + args[1], null);
                                         saveConfig();
                                         player.sendMessage(powerHourMsg("Deleted the " + args[1] + " arena!"));
-                                        if(getAllArenas().size() < 1){
+                                        if (getAllArenas().size() < 1) {
                                             disabled = true;
                                             player.sendMessage(powerHourMsg("There are no arenas configured, PowerHour will be disabled until an arena is added."));
                                         }
@@ -325,10 +328,10 @@ public class main extends JavaPlugin implements Listener{
                             }
                             break;
                         case "list":
-                            if(player.hasPermission(PERMISSION.listArenas)){
+                            if (player.hasPermission(PERMISSION.listArenas)) {
                                 List<Arena> arenaList = getAllArenas();
                                 StringBuilder sb = new StringBuilder();
-                                for(Arena s : arenaList){
+                                for (Arena s : arenaList) {
                                     sb.append(s.getName() + ", ");
                                 }
 
@@ -336,26 +339,26 @@ public class main extends JavaPlugin implements Listener{
                             }
                             break;
                         case "checkarena":
-                            if(player.hasPermission(PERMISSION.checkArena)){
+                            if (player.hasPermission(PERMISSION.checkArena)) {
                                 List<Arena> arenas = getAllArenas();
                                 boolean inRegion = false;
-                                for(Arena a : arenas){
+                                for (Arena a : arenas) {
                                     ProtectedRegion region = getRegion(a.getRegion(), Bukkit.getWorld(a.getWorld()));
-                                    if(region != null){
+                                    if (region != null) {
                                         Location loc = player.getLocation();
-                                        if(region.contains(BukkitUtil.toVector(loc))){
+                                        if (region.contains(BukkitUtil.toVector(loc))) {
                                             player.sendMessage(powerHourMsg("You are in " + a.getName() + " arena!"));
                                             inRegion = true;
                                         }
                                     }
                                 }
-                                if(!inRegion){
+                                if (!inRegion) {
                                     player.sendMessage(powerHourMsg("You are not in any arena!"));
                                 }
                             }
                             break;
                         case "startpowerhour":
-                            if(player.hasPermission(PERMISSION.startPowerHour)){
+                            if (player.hasPermission(PERMISSION.startPowerHour)) {
                                 player.sendMessage(powerHourMsg("Attempting to start a PowerHour(This will not work if a PowerHour is already running)"));
                                 startPowerHour(Calendar.getInstance());
                             }
@@ -367,7 +370,7 @@ public class main extends JavaPlugin implements Listener{
                 /*
                     Console Sender
                  */
-                switch (args[0].toLowerCase()){
+                switch (args[0].toLowerCase()) {
                     case "reload":
                         reloadPlugin();
                         who.sendMessage("Config reloaded!");
@@ -383,20 +386,20 @@ public class main extends JavaPlugin implements Listener{
         return false;
     }
 
-    private ProtectedRegion getRegion(String name, World world){
+    private ProtectedRegion getRegion(String name, World world) {
         RegionContainer container = getWorldGuard().getRegionContainer();
         RegionManager regions = container.get(world);
         ProtectedRegion region;
         if (regions != null) {
             region = regions.getRegion(name);
-            if(region != null)
+            if (region != null)
                 return region;
         }
         return null;
     }
 
-    private List<Arena> getAllArenas(){
-        if(config.contains("arenas")) {
+    private List<Arena> getAllArenas() {
+        if (config.contains("arenas")) {
             Set arenaList = config.getConfigurationSection("arenas").getKeys(false);
             List<Arena> arenas = new ArrayList<>();
             for (Object s : arenaList) {
@@ -408,8 +411,8 @@ public class main extends JavaPlugin implements Listener{
         } else return new ArrayList<>();
     }
 
-    private Arena getArena(String name){
-        if(config.contains("arenas." + name)){
+    private Arena getArena(String name) {
+        if (config.contains("arenas." + name)) {
             Arena arena = new Arena();
             arena.setName(name);
             arena.setRegion(config.getString("arenas." + name + ".region"));
@@ -432,8 +435,8 @@ public class main extends JavaPlugin implements Listener{
         return (WorldGuardPlugin) plugin;
     }
 
-    private boolean saveNewArena(Arena arena){
-        if(!config.contains("arenas." + arena.getName())) {
+    private boolean saveNewArena(Arena arena) {
+        if (!config.contains("arenas." + arena.getName())) {
             config.set("arenas." + arena.getName() + ".locX", arena.getX());
             config.set("arenas." + arena.getName() + ".locY", arena.getY());
             config.set("arenas." + arena.getName() + ".locZ", arena.getZ());
@@ -445,22 +448,22 @@ public class main extends JavaPlugin implements Listener{
         return true;
     }
 
-    private String powerHourMsg(String msg){
+    private String powerHourMsg(String msg) {
         msg = ChatColor.translateAlternateColorCodes('&', msg);
         return ChatColor.DARK_AQUA + "[Power Hour] " + ChatColor.AQUA + msg;
     }
 
-    private void loadConfig(){
+    private void loadConfig() {
         config.options().copyDefaults();
         saveDefaultConfig();
     }
 
-    private void saveMainConfig(){
+    private void saveMainConfig() {
         this.saveConfig();
     }
 
-    private void saveLangFile(Boolean setDefaults){
-        if(setDefaults) {
+    private void saveLangFile(Boolean setDefaults) {
+        if (setDefaults) {
             lang.set("version", currentLangVersion);
             lang.set("name", "&6Power Hour");
             lang.set("powerHourStart", "PowerHour is beginning in the [arena] arena!");
@@ -476,9 +479,10 @@ public class main extends JavaPlugin implements Listener{
             e.printStackTrace();
         }
     }
-    private void loadLangFile(){
+
+    private void loadLangFile() {
         File langFile = new File(this.getDataFolder(), this.langFile);
-        if(!langFile.exists()) {
+        if (!langFile.exists()) {
             try {
                 langFile.createNewFile();
             } catch (IOException e) {
@@ -487,22 +491,21 @@ public class main extends JavaPlugin implements Listener{
             lang = new YamlConfiguration();
             saveLangFile(true);
         }
-        if(langFile.exists()) {
+        if (langFile.exists()) {
             lang = YamlConfiguration.loadConfiguration(langFile);
-            if(lang.getInt("version") < currentLangVersion){
+            if (lang.getInt("version") < currentLangVersion) {
                 try {
                     lang.save(new File(this.getDataFolder(), this.langFile + ".old"));
                     lang = new YamlConfiguration();
                     saveLangFile(true);
                     log.warning("You had an old " + langFile + " file, renamed it to " + langFile + ".old and saved a new version. Please copy over any modified strings to the new file.");
-                } catch (Exception e){
-                    log.warning("Power Hour disabled, unable to read/write lang.yml file inside the PowerHour folder. ("+this.getDataFolder().getAbsolutePath() + "/" + langFile +".old)");
+                } catch (Exception e) {
+                    log.warning("Power Hour disabled, unable to read/write lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + langFile + ".old)");
                     getServer().getPluginManager().disablePlugin(this);
                 }
             }
-        }
-        else {
-            log.warning("Power Hour disabled, unable to read/create the lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/"+langFile+")");
+        } else {
+            log.warning("Power Hour disabled, unable to read/create the lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + langFile + ")");
             getServer().getPluginManager().disablePlugin(this);
         }
     }
