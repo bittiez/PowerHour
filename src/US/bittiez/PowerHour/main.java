@@ -253,8 +253,13 @@ public class main extends JavaPlugin implements Listener{
                                     newArena.setY(loc.getY());
                                     newArena.setZ(loc.getZ());
                                     newArena.setRegion(region.getId());
-                                    if (saveNewArena(newArena))
+                                    if (saveNewArena(newArena)) {
                                         player.sendMessage(powerHourMsg("Added the " + newArena.getName() + " arena!"));
+                                        if(disabled){
+                                            disabled = false;
+                                            log.info("First arena added, re-enabling PowerHour!");
+                                        }
+                                    }
                                     else
                                         player.sendMessage(powerHourMsg("Could not save the arena, something went wrong (Make sure there are no other arenas with the same name)."));
                                 }
@@ -333,14 +338,16 @@ public class main extends JavaPlugin implements Listener{
     }
 
     private List<Arena> getAllArenas(){
-        Set arenaList = config.getConfigurationSection("arenas").getKeys(false);
-        List<Arena> arenas = new ArrayList<>();
-        for(Object s : arenaList){
-            Arena a = getArena(s.toString());
-            if(a != null)
-                arenas.add(a);
-        }
-        return arenas;
+        if(config.contains("arenas")) {
+            Set arenaList = config.getConfigurationSection("arenas").getKeys(false);
+            List<Arena> arenas = new ArrayList<>();
+            for (Object s : arenaList) {
+                Arena a = getArena(s.toString());
+                if (a != null)
+                    arenas.add(a);
+            }
+            return arenas;
+        } else return new ArrayList<>();
     }
 
     private Arena getArena(String name){
