@@ -48,6 +48,7 @@ public class main extends JavaPlugin implements Listener{
     private String langFile = "lang.yml";
     private int checkDelay = 60;
     private boolean disabled = false;
+    private int currentLangVersion = 2;
 
     @Override
     public void onEnable(){
@@ -160,6 +161,8 @@ public class main extends JavaPlugin implements Listener{
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
+        if(disabled)
+            return;
         if(powerHour && powerHourArena != null) {
             Player who = event.getPlayer();
             if(who.hasPermission(PERMISSION.onJoinMessage)) {
@@ -172,6 +175,8 @@ public class main extends JavaPlugin implements Listener{
 
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
+        if(disabled)
+            return;
         if(powerHour && powerHourArena != null) {
             Player who = e.getEntity();
             ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
@@ -187,6 +192,8 @@ public class main extends JavaPlugin implements Listener{
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(final PlayerRespawnEvent event) {
+        if(disabled)
+            return;
         if(powerHour && powerHourArena != null) {
             Player who = event.getPlayer();
             ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
@@ -424,7 +431,7 @@ public class main extends JavaPlugin implements Listener{
 
     private void saveLangFile(Boolean setDefaults){
         if(setDefaults) {
-            lang.set("version", 1);
+            lang.set("version", currentLangVersion);
             lang.set("name", "&6Power Hour");
             lang.set("powerHourStart", "PowerHour is beginning in the [arena] arena!");
             lang.set("powerHourEnd", "PowerHour is ending for the [arena] arena!");
@@ -449,10 +456,21 @@ public class main extends JavaPlugin implements Listener{
             lang = new YamlConfiguration();
             saveLangFile(true);
         }
-        if(langFile.exists())
+        if(langFile.exists()) {
             lang = YamlConfiguration.loadConfiguration(langFile);
+            if(lang.getInt("version") < currentLangVersion){
+                try {
+                    lang.save(new File(this.getDataFolder(), this.langFile + ".old"));
+                    lang = new YamlConfiguration();
+                    saveLangFile(true);
+                    log.warning("You had an old " + langFile + " file, renamed it to " + langFile + ".old and saved a new version. Please copy over any modified strings to the new file.");
+                } catch (Exception e){
+                    log.warning("Power Hour disabled, unable to read/write lang.yml file inside the PowerHour folder. ("+this.getDataFolder().getAbsolutePath() + "/" + langFile +".old)");
+                }
+            }
+        }
         else {
-            log.warning("Power Hour disabled, unable to read/create the lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/lang.yml)");
+            log.warning("Power Hour disabled, unable to read/create the lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/"+langFile+")");
             getServer().getPluginManager().disablePlugin(this);
         }
     }
