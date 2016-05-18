@@ -47,6 +47,7 @@ public class main extends JavaPlugin implements Listener{
     private FileConfiguration config = getConfig();
     private String langFile = "lang.yml";
     private int checkDelay = 60;
+    private boolean disabled = false;
 
     @Override
     public void onEnable(){
@@ -57,6 +58,12 @@ public class main extends JavaPlugin implements Listener{
 
         this.powerHours = new ArrayList<>();
         getTimesFromConfig();
+
+        if(getAllArenas().size() < 1)
+        {
+            disabled = true;
+            log.warning("PowerHour did not detect any arenas, please set up at least one!");
+        }
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() { public void run() {checkPowerHour();} }, checkDelay * 20,  checkDelay * 20);
         PluginManager pm = getServer().getPluginManager();
@@ -109,6 +116,8 @@ public class main extends JavaPlugin implements Listener{
     }
 
     private void checkPowerHour(){
+        if(disabled)
+            return;
         long hour, minute;
 
         Calendar now = Calendar.getInstance();
