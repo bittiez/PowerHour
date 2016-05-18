@@ -48,7 +48,7 @@ public class main extends JavaPlugin implements Listener{
     private String langFile = "lang.yml";
     private int checkDelay = 60;
     private boolean disabled = false;
-    private int currentLangVersion = 2;
+    private int currentLangVersion = 3;
 
     @Override
     public void onEnable(){
@@ -491,6 +491,7 @@ public class main extends JavaPlugin implements Listener{
                     log.warning("You had an old " + langFile + " file, renamed it to " + langFile + ".old and saved a new version. Please copy over any modified strings to the new file.");
                 } catch (Exception e){
                     log.warning("Power Hour disabled, unable to read/write lang.yml file inside the PowerHour folder. ("+this.getDataFolder().getAbsolutePath() + "/" + langFile +".old)");
+                    getServer().getPluginManager().disablePlugin(this);
                 }
             }
         }
