@@ -153,10 +153,7 @@ public class main extends JavaPlugin implements Listener{
                     powerHour = false;
                 }
             } else
-            {
-                log.info("Power hour ending!");
                 powerHour = false;
-            }
 
         }
     }
@@ -165,9 +162,11 @@ public class main extends JavaPlugin implements Listener{
     public void onJoin(PlayerJoinEvent event){
         if(powerHour && powerHourArena != null) {
             Player who = event.getPlayer();
-            who.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    replaceTag(replaceTag(config.getString("playerLogin"), "player", who.getDisplayName()), "arena", powerHourArena.getName())
-            ));
+            if(who.hasPermission(PERMISSION.onJoinMessage)) {
+                who.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                        replaceTag(replaceTag(config.getString("playerLogin"), "player", who.getDisplayName()), "arena", powerHourArena.getName())
+                ));
+            }
         }
     }
 
@@ -279,6 +278,10 @@ public class main extends JavaPlugin implements Listener{
                                         config.set("arenas." + args[1], null);
                                         saveConfig();
                                         player.sendMessage(powerHourMsg("Deleted the " + args[1] + " arena!"));
+                                        if(getAllArenas().size() < 1){
+                                            disabled = true;
+                                            player.sendMessage(powerHourMsg("There are no arenas configured, PowerHour will be disabled until an arena is added."));
+                                        }
                                     } else
                                         player.sendMessage(args[1] + " does not seem to exist!");
                                 }

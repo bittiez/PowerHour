@@ -30,3 +30,6 @@ permissions:
     PowerHour.startPowerHour:
         description: Allows forcing a power hour to start
         default: op
+    PowerHour.onJoinMessage:
+        description: Will recieve the playerJoin message when logging into the server if they have this permission
+        default: op

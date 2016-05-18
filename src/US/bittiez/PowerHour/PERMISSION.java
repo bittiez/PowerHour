@@ -10,4 +10,5 @@ public class PERMISSION {
     public static String listArenas = "PowerHour.list";
     public static String checkArena = "PowerHour.check";
     public static String startPowerHour = "PowerHour.startPowerHour";
+    public static String onJoinMessage = "PowerHour.onJoinMessage";
 }
