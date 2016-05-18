@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -151,6 +152,15 @@ public class main extends JavaPlugin implements Listener{
         }
     }
 
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event){
+        if(powerHour && powerHourArena != null) {
+            Player who = event.getPlayer();
+            who.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    replaceTag(replaceTag(config.getString("playerLogin"), "player", who.getDisplayName()), "arena", powerHourArena.getName())
+            ));
+        }
+    }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
@@ -382,6 +392,7 @@ public class main extends JavaPlugin implements Listener{
             lang.set("powerHourStart", "PowerHour is beginning in the [arena] arena!");
             lang.set("powerHourEnd", "PowerHour is ending for the [arena] arena!");
             lang.set("playerDeath", "[player] has died during PowerHour in the [arena] arena!");
+            lang.set("playerLogin", "Hey [player]! PowerHour is currently active at the [arena] arena!");
         }
 
         try {
