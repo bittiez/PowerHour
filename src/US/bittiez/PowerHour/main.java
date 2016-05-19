@@ -49,7 +49,7 @@ public class main extends JavaPlugin implements Listener {
     private String langFile = "lang.yml";
     private int checkDelay = 60;
     private boolean disabled = false;
-    private int currentLangVersion = 3;
+    private int currentLangVersion = 4;
 
     @Override
     public void onEnable() {
@@ -165,6 +165,8 @@ public class main extends JavaPlugin implements Listener {
                 int mn = powerHourEnd.get(Calendar.MINUTE);
 
                 if (hour >= hr && minute >= mn) {
+                    if(hour == 23 && hr == 0)
+                        return;
                     getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(lang.getString("powerHourEnd"), "arena", powerHourArena.getName())));
                     powerHourEnd = null;
                     powerHourArena = null;
@@ -209,13 +211,20 @@ public class main extends JavaPlugin implements Listener {
                     if (killer != null) {
                         e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(
                                 lang.getString("playerDeathByPlayer"),
-                                new String[]{"player", "killer", "arena"},
+                                new String[]{"player",            "killer",                 "arena"},
                                 new String[]{who.getDisplayName(), killer.getDisplayName(), powerHourArena.getName()}
                         )));
+                        killer.giveExp(config.getInt("killExp"));
+                        killer.sendMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(
+                                lang.getString("expReward"),
+                                        new String[]{"killer",                "player",             "exp"},
+                                        new String[]{killer.getDisplayName(), who.getDisplayName(), config.getString("killExp")}
+                        )));
+                        //Add message here!
                     } else {
                         e.setDeathMessage(ChatColor.translateAlternateColorCodes('&', replaceTag(
                                 lang.getString("playerDeath"),
-                                new String[]{"player", "arena"},
+                                new String[]{"player",             "arena"},
                                 new String[]{who.getDisplayName(), powerHourArena.getName()}
                         )));
                     }
@@ -266,6 +275,8 @@ public class main extends JavaPlugin implements Listener {
                         player.sendMessage(powerHourMsg("/PowerHour checkArena | Checks if you are in an arena, and gives you the arena name if you are"));
                     if (player.hasPermission(PERMISSION.startPowerHour))
                         player.sendMessage(powerHourMsg("/PowerHour startPowerHour | Forces a PowerHour to start"));
+                    if(player.hasPermission(PERMISSION.cancelPowerHour))
+                        player.sendMessage(powerHourMsg("/PowerHour cancel | Cancel the current power hour"));
 
 
                 } else { //There is arguments
@@ -359,8 +370,15 @@ public class main extends JavaPlugin implements Listener {
                             break;
                         case "startpowerhour":
                             if (player.hasPermission(PERMISSION.startPowerHour)) {
-                                player.sendMessage(powerHourMsg("Attempting to start a PowerHour(This will not work if a PowerHour is already running)"));
+                                player.sendMessage(powerHourMsg("Attempting to start a PowerHour. (This will not work if a PowerHour is already running)"));
                                 startPowerHour(Calendar.getInstance());
+                            }
+                            break;
+                        case "cancel":
+                            if(player.hasPermission(PERMISSION.cancelPowerHour)){
+                                powerHourArena = null;
+                                powerHour = false;
+                                player.sendMessage(powerHourMsg("PowerHour has been canceled if it was running."));
                             }
                             break;
                     }
@@ -378,6 +396,11 @@ public class main extends JavaPlugin implements Listener {
                     case "startpowerhour":
                         who.sendMessage("Attempting to start a PowerHour(This will not work if a PowerHour is already running)");
                         startPowerHour(Calendar.getInstance());
+                        break;
+                    case "cancel":
+                        powerHourArena = null;
+                        powerHour = false;
+                        who.sendMessage("PowerHour has been canceled if it was running.");
                         break;
                 }
             }
@@ -466,11 +489,12 @@ public class main extends JavaPlugin implements Listener {
         if (setDefaults) {
             lang.set("version", currentLangVersion);
             lang.set("name", "&6Power Hour");
-            lang.set("powerHourStart", "PowerHour is beginning in the [arena] arena!");
-            lang.set("powerHourEnd", "PowerHour is ending for the [arena] arena!");
-            lang.set("playerDeath", "[player] has died during PowerHour in the [arena] arena!");
-            lang.set("playerDeathByPlayer", "[killer] killed [player] during PowerHour in the [arena] arena!");
-            lang.set("playerLogin", "Hey [player]! PowerHour is currently active at the [arena] arena!");
+            lang.set("powerHourStart", "&6PowerHour is beginning in the &5[arena] &6arena!");
+            lang.set("powerHourEnd", "&6PowerHour is ending for the &5[arena] &6arena!");
+            lang.set("playerDeath", "&5[player] has died during PowerHour in the &5[arena] &6arena!");
+            lang.set("playerDeathByPlayer", "&5[killer] killed &5[player] &6during PowerHour in the &5[arena] &6arena!");
+            lang.set("playerLogin", "&6Hey &5[player]! PowerHour is currently active at the &5[arena] &6arena!");
+            lang.set("expReward", "&6Hey &5[killer] you were awarded &5[exp] &6exp for killing &5[player]&6!");
         }
 
         try {
