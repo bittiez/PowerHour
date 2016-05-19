@@ -45,11 +45,14 @@ public class main extends JavaPlugin implements Listener {
 
     private static Logger log;
     private FileConfiguration lang;
+    private FileConfiguration deathLoc;
     private FileConfiguration config = getConfig();
     private String langFile = "lang.yml";
+    private String deathFile = "deathLocations.yml";
     private int checkDelay = 60;
     private boolean disabled = false;
-    private int currentLangVersion = 4;
+    private int currentLangVersion = 5;
+    private boolean debug = true;
 
     @Override
     public void onEnable() {
@@ -57,6 +60,7 @@ public class main extends JavaPlugin implements Listener {
 
         loadConfig();
         loadLangFile();
+        loadDeathLoc();
 
         this.powerHours = new ArrayList<>();
         getTimesFromConfig();
@@ -106,6 +110,11 @@ public class main extends JavaPlugin implements Listener {
             }
             return string;
         }
+    }
+
+    private void onPowerHourEnd(){
+        deathLoc = new YamlConfiguration();
+        saveDeathFile();
     }
 
     private void startPowerHour(Calendar cal) {
@@ -172,6 +181,7 @@ public class main extends JavaPlugin implements Listener {
                     powerHourArena = null;
                     log.info("Power hour ending!");
                     powerHour = false;
+                    onPowerHourEnd();
                 }
             } else
                 powerHour = false;
@@ -228,21 +238,43 @@ public class main extends JavaPlugin implements Listener {
                                 new String[]{who.getDisplayName(), powerHourArena.getName()}
                         )));
                     }
+                    deathLoc.set(who.getName() + ".world", who.getLocation().getWorld().getName());
+                    deathLoc.set(who.getName() + ".x", who.getLocation().getX());
+                    deathLoc.set(who.getName() + ".y", who.getLocation().getY());
+                    deathLoc.set(who.getName() + ".z", who.getLocation().getZ());
+                    saveDeathFile();
                 }
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(final PlayerRespawnEvent event) {
         if (disabled)
             return;
         if (powerHour && powerHourArena != null) {
+            if(debug)
+                log.info("Player Respawned during PowerHour");
             Player who = event.getPlayer();
-            ProtectedRegion region = getRegion(powerHourArena.getRegion(), who.getWorld());
-            if (region != null) {
-                if (region.contains(BukkitUtil.toVector(who.getLocation()))) {
-                    event.setRespawnLocation(new Location(Bukkit.getWorld(powerHourArena.getWorld()), powerHourArena.getX(), powerHourArena.getY(), powerHourArena.getZ()));
+            if(deathLoc.contains(who.getName())) {
+                if(debug)
+                    log.info(who.getName() + " has a death location saved..");
+
+                ProtectedRegion region = getRegion(powerHourArena.getRegion(), Bukkit.getWorld(powerHourArena.getWorld()));
+                if (region != null) {
+                    Location dlocation = new Location(
+                            Bukkit.getWorld(deathLoc.getString(who.getName() + ".world")),
+                            deathLoc.getInt(who.getName() + ".x"),
+                            deathLoc.getInt(who.getName() + ".y"),
+                            deathLoc.getInt(who.getName() + ".z")
+                    );
+                    if (region.contains(BukkitUtil.toVector(dlocation))) {
+                        if(debug)
+                            log.info("Player died in the arena! respawning!");
+                        event.setRespawnLocation(new Location(Bukkit.getWorld(powerHourArena.getWorld()), powerHourArena.getX(), powerHourArena.getY(), powerHourArena.getZ()));
+                    }
+                    deathLoc.set(who.getName(), null);
+                    saveDeathFile();
                 }
             }
         }
@@ -378,6 +410,7 @@ public class main extends JavaPlugin implements Listener {
                             if(player.hasPermission(PERMISSION.cancelPowerHour)){
                                 powerHourArena = null;
                                 powerHour = false;
+                                onPowerHourEnd();
                                 player.sendMessage(powerHourMsg("PowerHour has been canceled if it was running."));
                             }
                             break;
@@ -400,6 +433,7 @@ public class main extends JavaPlugin implements Listener {
                     case "cancel":
                         powerHourArena = null;
                         powerHour = false;
+                        onPowerHourEnd();
                         who.sendMessage("PowerHour has been canceled if it was running.");
                         break;
                 }
@@ -492,7 +526,7 @@ public class main extends JavaPlugin implements Listener {
             lang.set("powerHourStart", "&6PowerHour is beginning in the &5[arena] &6arena!");
             lang.set("powerHourEnd", "&6PowerHour is ending for the &5[arena] &6arena!");
             lang.set("playerDeath", "&5[player] has died during PowerHour in the &5[arena] &6arena!");
-            lang.set("playerDeathByPlayer", "&5[killer] killed &5[player] &6during PowerHour in the &5[arena] &6arena!");
+            lang.set("playerDeathByPlayer", "&5[killer] &6killed &5[player] &6during PowerHour in the &5[arena] &6arena!");
             lang.set("playerLogin", "&6Hey &5[player]! PowerHour is currently active at the &5[arena] &6arena!");
             lang.set("expReward", "&6Hey &5[killer] you were awarded &5[exp] &6exp for killing &5[player]&6!");
         }
@@ -522,14 +556,40 @@ public class main extends JavaPlugin implements Listener {
                     lang.save(new File(this.getDataFolder(), this.langFile + ".old"));
                     lang = new YamlConfiguration();
                     saveLangFile(true);
-                    log.warning("You had an old " + langFile + " file, renamed it to " + langFile + ".old and saved a new version. Please copy over any modified strings to the new file.");
+                    log.warning("You had an old " + this.langFile + " file, renamed it to " + this.langFile + ".old and saved a new version. Please copy over any modified strings to the new file.");
                 } catch (Exception e) {
-                    log.warning("Power Hour disabled, unable to read/write lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + langFile + ".old)");
+                    log.warning("Power Hour disabled, unable to read/write lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + this.langFile + ".old)");
                     getServer().getPluginManager().disablePlugin(this);
                 }
             }
         } else {
-            log.warning("Power Hour disabled, unable to read/create the lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + langFile + ")");
+            log.warning("Power Hour disabled, unable to read/create the lang.yml file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + this.langFile + ")");
+            getServer().getPluginManager().disablePlugin(this);
+        }
+    }
+
+    private void saveDeathFile(){
+        try {
+            deathLoc.save(new File(this.getDataFolder(), deathFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadDeathLoc() {
+        File deathLocFile = new File(this.getDataFolder(), this.deathFile);
+        if (!deathLocFile.exists()) {
+            try {
+                deathLocFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            deathLoc = new YamlConfiguration();
+        }
+        if (deathLocFile.exists()) {
+            deathLoc = YamlConfiguration.loadConfiguration(deathLocFile);
+        } else {
+            log.warning("Power Hour disabled, unable to read/create the "+deathFile+" file inside the PowerHour folder. (" + this.getDataFolder().getAbsolutePath() + "/" + deathFile + ")");
             getServer().getPluginManager().disablePlugin(this);
         }
     }
