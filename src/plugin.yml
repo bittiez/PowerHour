@@ -1,5 +1,5 @@
 name: PowerHour
-version: 1.2.2
+version: 1.2.3
 author: bittiez
 main: US.bittiez.PowerHour.main
 depend: [WorldGuard, WorldEdit]

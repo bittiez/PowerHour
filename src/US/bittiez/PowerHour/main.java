@@ -163,7 +163,7 @@ public class main extends JavaPlugin implements Listener {
                 if ((hour >= hr && minute >= mn) && (hour <= hrEnd && minute <= mnEnd)) {
                     //Start power hour!
                     log.info("Start: " + hr + ":" + mn);
-                    startPowerHour(cal);
+                    startPowerHour(Calendar.getInstance());
                     return;
                 }
             }
