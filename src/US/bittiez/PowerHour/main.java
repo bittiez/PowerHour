@@ -527,7 +527,7 @@ public class main extends JavaPlugin implements Listener {
             lang.set("powerHourEnd", "&6PowerHour is ending for the &5[arena] &6arena!");
             lang.set("playerDeath", "&5[player] has died during PowerHour in the &5[arena] &6arena!");
             lang.set("playerDeathByPlayer", "&5[killer] &6killed &5[player] &6during PowerHour in the &5[arena] &6arena!");
-            lang.set("playerLogin", "&6Hey &5[player]! PowerHour is currently active at the &5[arena] &6arena!");
+            lang.set("playerLogin", "&6Hey &5[player]&6! PowerHour is currently active at the &5[arena] &6arena!");
             lang.set("expReward", "&6Hey &5[killer] you were awarded &5[exp] &6exp for killing &5[player]&6!");
         }
 
